@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(venv/Scripts/pip show *)",
+      "Bash(venv/Scripts/python -c \"from sentence_transformers import SentenceTransformer; m = SentenceTransformer\\('all-MiniLM-L6-v2'\\); print\\(m.encode\\('hello'\\).tolist\\(\\)[:5]\\)\")",
+      "Bash(venv/Scripts/python -c ' *)",
+      "Bash(venv/Scripts/uvicorn app.main:app --host 0.0.0.0 --port 8000)",
+      "Bash(echo \"Leave policy: 25 days annual leave per year. Contact hr@company.com to book leave.\")",
+      "Bash(venv/Scripts/python ingest_files.py)",
+      "Bash(venv/Scripts/python -c \"import requests; r = requests.get\\('http://localhost:8000/health', timeout=5\\); print\\(r.status_code, r.text\\)\")"
+    ]
+  }
+}

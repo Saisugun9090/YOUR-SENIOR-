@@ -1,0 +1,32 @@
+# Environment
+.env
+*.env
+
+# Secrets
+backend/secrets/*.json
+!backend/secrets/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# ChromaDB data
+data/
+
+# Node
+node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
