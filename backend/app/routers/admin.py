@@ -1,3 +1,5 @@
+"""Admin API: document management, query log, and system health endpoints."""
+
 import uuid
 from datetime import datetime, timezone
 
@@ -17,14 +19,15 @@ from app.models.schemas import (
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-# In-memory query log — appended to by the RAG engine (Section 4)
+# In-memory query log — kept bounded by QUERY_LOG_MAX_ENTRIES.
 _query_log: list[dict] = []
 
 
 def append_query_log(entry: dict) -> None:
+    """Prepend an entry to the query log, capping the list at the configured max."""
     settings = get_settings()
     _query_log.insert(0, entry)
-    del _query_log[settings.query_log_max_entries :]
+    del _query_log[settings.query_log_max_entries:]
 
 
 # ─── Documents ────────────────────────────────────────────────────────────────

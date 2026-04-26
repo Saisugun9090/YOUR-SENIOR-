@@ -1,3 +1,5 @@
+"""Parser for Microsoft Word (.docx) files using python-docx."""
+
 import io
 
 from docx import Document
@@ -10,9 +12,11 @@ _DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 class DOCXParser(BaseParser):
     @classmethod
     def can_parse(cls, filename: str, mime_type: str = "") -> bool:
+        """Return True for .docx files or the OOXML MIME type."""
         return filename.lower().endswith(".docx") or mime_type == _DOCX_MIME
 
     async def parse(self, content: bytes, filename: str, **kwargs) -> ParsedDocument:
+        """Extract non-empty paragraphs from a Word document."""
         doc = Document(io.BytesIO(content))
 
         paragraphs: list[str] = []

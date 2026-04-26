@@ -1,3 +1,5 @@
+"""Semantic document chunker: splits at heading/paragraph boundaries with sentence fallback."""
+
 import re
 import uuid
 from dataclasses import dataclass, field

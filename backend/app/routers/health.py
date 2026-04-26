@@ -1,3 +1,5 @@
+"""Health check endpoint — public, no API key required."""
+
 from datetime import datetime, timezone
 
 from fastapi import APIRouter

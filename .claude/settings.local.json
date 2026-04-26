@@ -7,7 +7,11 @@
       "Bash(venv/Scripts/uvicorn app.main:app --host 0.0.0.0 --port 8000)",
       "Bash(echo \"Leave policy: 25 days annual leave per year. Contact hr@company.com to book leave.\")",
       "Bash(venv/Scripts/python ingest_files.py)",
-      "Bash(venv/Scripts/python -c \"import requests; r = requests.get\\('http://localhost:8000/health', timeout=5\\); print\\(r.status_code, r.text\\)\")"
+      "Bash(venv/Scripts/python -c \"import requests; r = requests.get\\('http://localhost:8000/health', timeout=5\\); print\\(r.status_code, r.text\\)\")",
+      "Bash(xargs grep *)",
+      "Bash(cat \"C:\\\\Users\\\\AVITA\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-AVITA-your-senior\\\\d5142617-128e-4116-a7d3-15d69b380fba\\\\tasks\\\\brv18eiu8.output\")",
+      "Bash(cat \"C:\\\\Users\\\\AVITA\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-AVITA-your-senior\\\\d5142617-128e-4116-a7d3-15d69b380fba\\\\tasks\\\\b9cwcec39.output\")",
+      "Bash(python -c ' *)"
     ]
   }
 }

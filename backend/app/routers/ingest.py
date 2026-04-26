@@ -1,3 +1,5 @@
+"""Ingestion API: Drive sync, file upload, and raw-text ingestion endpoints."""
+
 import uuid
 from pathlib import Path
 
@@ -6,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from app.config import get_settings
 from app.db.chroma import get_collection
 from app.ingestion.chunker import chunk_document
+from app.ingestion.parsers.base import ParsedDocument
 from app.ingestion.pipeline import get_job_status, run_ingestion_job
 from app.ingestion.registry import get_parser
 from app.models.schemas import (
@@ -32,10 +35,7 @@ _MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 
 @router.post("/drive", response_model=IngestResponse)
 async def ingest_from_drive(request: IngestRequest, background_tasks: BackgroundTasks):
-    """
-    Kick off a background job that pulls files from Google Drive,
-    parses, chunks, embeds, and stores them in ChromaDB.
-    """
+    """Start a background job that pulls files from Google Drive and indexes them."""
     job_id = str(uuid.uuid4())
     background_tasks.add_task(run_ingestion_job, job_id, request.folder_id)
     return IngestResponse(
@@ -66,10 +66,8 @@ async def ingestion_status(job_id: str):
 @router.post("/upload", response_model=UploadIngestResponse)
 async def upload_and_ingest(file: UploadFile = File(...)):
     """
-    Upload a single PDF, DOCX, or TXT file and ingest it immediately.
-    Runs the full pipeline: parse → chunk → embed → store in ChromaDB.
-    Re-uploading the same filename replaces its previous chunks cleanly.
-    No Google Drive or service account required.
+    Upload a PDF, DOCX, or TXT file and ingest it immediately.
+    Re-uploading the same filename replaces its previous chunks.
     """
     filename = file.filename or "uploaded_file"
     ext = Path(filename).suffix.lower()
@@ -96,10 +94,9 @@ async def upload_and_ingest(file: UploadFile = File(...)):
     if len(content) > _MAX_UPLOAD_BYTES:
         raise HTTPException(
             status_code=413,
-            detail=f"File exceeds the 50 MB upload limit ({len(content) // (1024*1024)} MB received).",
+            detail=f"File exceeds the 50 MB upload limit ({len(content) // (1024 * 1024)} MB received).",
         )
 
-    # ── Parse ─────────────────────────────────────────────────────────────────
     try:
         parsed = await parser.parse(content, filename)
     except Exception as exc:
@@ -116,16 +113,10 @@ async def upload_and_ingest(file: UploadFile = File(...)):
             message="File parsed but contained no readable text.",
         )
 
-    # ── Chunk ─────────────────────────────────────────────────────────────────
     settings = get_settings()
-
-    # Stable doc_id derived from the filename — re-uploading the same file
-    # will delete and replace its previous chunks automatically.
+    # Stable doc_id from filename — re-uploading replaces chunks cleanly.
     doc_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"upload:{filename}"))
-
-    chunks = chunk_document(
-        parsed, doc_id, settings.max_chunk_tokens, settings.chunk_overlap_tokens
-    )
+    chunks = chunk_document(parsed, doc_id, settings.max_chunk_tokens, settings.chunk_overlap_tokens)
 
     if not chunks:
         return UploadIngestResponse(
@@ -135,7 +126,6 @@ async def upload_and_ingest(file: UploadFile = File(...)):
             message="Document produced no chunks after splitting.",
         )
 
-    # ── Remove stale chunks (idempotent re-upload) ────────────────────────────
     collection = get_collection()
     try:
         existing = collection.get(where={"doc_id": doc_id})
@@ -144,7 +134,6 @@ async def upload_and_ingest(file: UploadFile = File(...)):
     except Exception:
         pass
 
-    # ── Embed + store ─────────────────────────────────────────────────────────
     texts = [c.content for c in chunks]
     embeddings = await embed_texts(texts)
 
@@ -168,12 +157,9 @@ async def upload_and_ingest(file: UploadFile = File(...)):
 @router.post("/text", response_model=UploadIngestResponse)
 async def ingest_raw_text(request: TextIngestRequest):
     """
-    Ingest raw text directly as JSON — no file needed.
-    Useful for quick testing or programmatic ingestion without Drive.
+    Ingest raw text as JSON — no file upload needed.
     Re-posting with the same filename replaces its previous chunks.
     """
-    from app.ingestion.parsers.base import ParsedDocument
-
     paragraphs = [p.strip() for p in request.text.split("\n\n") if p.strip()]
     if not paragraphs:
         return UploadIngestResponse(
@@ -197,9 +183,7 @@ async def ingest_raw_text(request: TextIngestRequest):
 
     settings = get_settings()
     doc_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"text:{request.filename}"))
-    chunks = chunk_document(
-        parsed, doc_id, settings.max_chunk_tokens, settings.chunk_overlap_tokens
-    )
+    chunks = chunk_document(parsed, doc_id, settings.max_chunk_tokens, settings.chunk_overlap_tokens)
 
     if not chunks:
         return UploadIngestResponse(
@@ -231,5 +215,5 @@ async def ingest_raw_text(request: TextIngestRequest):
         filename=request.filename,
         chunks_created=len(chunks),
         status="completed",
-        message=f"Successfully ingested {len(chunks)} chunks from raw text as '{request.filename}'.",
+        message=f"Successfully ingested {len(chunks)} chunks from '{request.filename}'.",
     )

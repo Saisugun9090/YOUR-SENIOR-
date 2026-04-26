@@ -12,13 +12,13 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      # Override the persist path to use the named volume below
+      # Override the persist path to use the named volume below.
       - CHROMA_PERSIST_DIR=/app/chromadb_store
-      # Allow requests from the dockerised frontend (port 3000) and local dev
+      # Allow requests from the Dockerised frontend (port 3000) and local dev.
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8000
     volumes:
       - chromadb_data:/app/chromadb_store
-      # Mount secrets read-only so the service account JSON is available at runtime
+      # Mount secrets read-only so the service account JSON is available at runtime.
       - ./backend/secrets:/app/secrets:ro
     restart: unless-stopped
     healthcheck:
@@ -33,10 +33,11 @@ services:
     build:
       context: ./frontend
       args:
-        # These are baked into the JS bundle at build time.
-        # The browser talks directly to the backend, so use the HOST port (8000).
+        # VITE_ vars are baked into the JS bundle at build time.
+        # The browser calls the backend directly, so use the HOST port (8000).
+        # VITE_API_KEY reads from backend/.env via ${YOUR_SENIOR_API_KEY}.
         - VITE_API_URL=http://localhost:8000
-        - VITE_API_KEY=yoursenior-sai-2025
+        - VITE_API_KEY=${YOUR_SENIOR_API_KEY}
     container_name: your-senior-frontend
     ports:
       - "3000:80"
@@ -46,5 +47,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  # Named volume keeps ChromaDB data alive across container restarts
+  # Named volume keeps ChromaDB data alive across container restarts.
   chromadb_data:

@@ -1,13 +1,16 @@
+"""Pydantic request and response schemas for every API endpoint."""
+
 from datetime import datetime
 from enum import Enum
 from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
 class ConfidenceTier(str, Enum):
-    HIGH = "high"        # score > CONFIDENCE_HIGH  → full answer + citations
+    HIGH    = "high"     # score > CONFIDENCE_HIGH  → full answer + citations
     PARTIAL = "partial"  # CONFIDENCE_LOW ≤ score ≤ CONFIDENCE_HIGH → partial answer
-    LOW = "low"          # score < CONFIDENCE_LOW   → "I don't have a reliable answer"
+    LOW     = "low"      # score < CONFIDENCE_LOW   → "I don't have a reliable answer"
 
 
 # ─── Query ────────────────────────────────────────────────────────────────────
@@ -46,10 +49,10 @@ class IngestRequest(BaseModel):
 
 
 class IngestStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
+    PENDING   = "pending"
+    RUNNING   = "running"
     COMPLETED = "completed"
-    FAILED = "failed"
+    FAILED    = "failed"
 
 
 class IngestResponse(BaseModel):
@@ -67,7 +70,7 @@ class ReindexRequest(BaseModel):
 class UploadIngestResponse(BaseModel):
     filename: str
     chunks_created: int
-    status: str          # "completed" | "failed"
+    status: str   # "completed" | "failed"
     message: str = ""
 
 
@@ -79,15 +82,15 @@ class TextIngestRequest(BaseModel):
 # ─── Admin — Documents ────────────────────────────────────────────────────────
 
 class ConfidenceDecayStatus(str, Enum):
-    FRESH = "fresh"    # ingested < 7 days ago
-    AGING = "aging"    # 7–30 days
-    STALE = "stale"    # > 30 days
+    FRESH = "fresh"  # ingested < 7 days ago
+    AGING = "aging"  # 7–30 days
+    STALE = "stale"  # > 30 days
 
 
 class DocumentInfo(BaseModel):
     doc_id: str
     filename: str
-    source_type: str          # "pdf" | "docx" | "gdoc" | "txt"
+    source_type: str           # "pdf" | "docx" | "gdoc" | "txt"
     file_size_bytes: Optional[int] = None
     chunk_count: int
     date_ingested: datetime

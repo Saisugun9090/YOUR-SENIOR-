@@ -1,3 +1,5 @@
+"""FastAPI application factory: registers middleware, CORS, and all routers."""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

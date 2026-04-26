@@ -1,8 +1,22 @@
 # Your Senior
 
+[![Python](https://img.shields.io/badge/Python-3.11-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=black)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ed?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-c9a84c)](LICENSE)
+
 An AI-powered RAG agent that reads your company's internal documents and answers questions like a trusted senior employee.
 
 Upload PDFs, Word docs, Google Docs, or plain text files. Ask anything. Get cited, confidence-rated answers — or a clear "I don't know" when the data isn't there.
+
+---
+
+## Screenshot
+
+> _Add a screenshot of the chat interface here._
+
+![Your Senior chat interface](docs/screenshot.png)
 
 ---
 
@@ -50,7 +64,7 @@ cd your-senior
 
 # 2. Create your environment file
 cp backend/.env.example backend/.env
-# Fill in ANTHROPIC_API_KEY and YOUR_SENIOR_API_KEY in backend/.env
+# Open backend/.env and fill in ANTHROPIC_API_KEY and YOUR_SENIOR_API_KEY
 
 # 3. Build and start both services
 docker compose up --build
@@ -73,17 +87,10 @@ To wipe the vector store too: `docker compose down -v`
 
 ```bash
 cd backend
-
-# Create and activate a virtual environment
 python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # macOS / Linux
-
+source venv/bin/activate     # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-cp .env.example .env
-# Fill in ANTHROPIC_API_KEY and YOUR_SENIOR_API_KEY
-
+cp .env.example .env         # fill in ANTHROPIC_API_KEY and YOUR_SENIOR_API_KEY
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -97,9 +104,9 @@ npm run dev        # http://localhost:5173
 
 The frontend reads `VITE_API_URL` (defaults to `http://localhost:8000`) and `VITE_API_KEY` from a `.env` file in the `frontend/` directory. Create one if you need to override:
 
-```
+```env
 VITE_API_URL=http://localhost:8000
-VITE_API_KEY=yoursenior-sai-2025
+VITE_API_KEY=<your-api-key>
 ```
 
 ---
@@ -110,7 +117,7 @@ VITE_API_KEY=yoursenior-sai-2025
 
 ```bash
 curl -X POST http://localhost:8000/ingest/upload \
-  -H "X-API-Key: yoursenior-sai-2025" \
+  -H "X-API-Key: <your-api-key>" \
   -F "file=@/path/to/document.pdf"
 ```
 
@@ -120,7 +127,7 @@ Accepts `.pdf`, `.docx`, `.txt`. Max 50 MB. Re-uploading the same filename repla
 
 ```bash
 curl -X POST http://localhost:8000/ingest/text \
-  -H "X-API-Key: yoursenior-sai-2025" \
+  -H "X-API-Key: <your-api-key>" \
   -H "Content-Type: application/json" \
   -d '{"text": "Your content here...", "filename": "my-doc.txt"}'
 ```
@@ -128,25 +135,17 @@ curl -X POST http://localhost:8000/ingest/text \
 ### Option C — Google Drive sync
 
 ```bash
-# Place your service account JSON at backend/secrets/service-account.json
-# Set GOOGLE_DRIVE_FOLDER_ID in backend/.env
+# 1. Place your service account JSON at backend/secrets/service-account.json
+# 2. Set GOOGLE_DRIVE_FOLDER_ID in backend/.env
 
 curl -X POST http://localhost:8000/ingest/drive \
-  -H "X-API-Key: yoursenior-sai-2025" \
+  -H "X-API-Key: <your-api-key>" \
   -H "Content-Type: application/json" \
   -d '{"folder_id": "your-google-drive-folder-id"}'
 
 # Poll for status
 curl http://localhost:8000/ingest/status/<job_id> \
-  -H "X-API-Key: yoursenior-sai-2025"
-```
-
-### Bulk ingest script
-
-```bash
-# Put wipro.txt, google.txt, amazon.txt in the project root, then:
-cd backend
-python ingest_companies.py
+  -H "X-API-Key: <your-api-key>"
 ```
 
 ---
@@ -169,28 +168,30 @@ All endpoints (except `/health`, `/docs`, `/redoc`) require the `X-API-Key` head
 | `GET` | `/admin/query-log` | Last 50 queries |
 | `GET` | `/admin/system-health` | ChromaDB stats + uptime |
 
-Full interactive docs: `http://localhost:8000/docs`
+Full interactive docs at `http://localhost:8000/docs`.
 
 ### Example: ask a question
 
 ```bash
 curl -X POST http://localhost:8000/query \
-  -H "X-API-Key: yoursenior-sai-2025" \
+  -H "X-API-Key: <your-api-key>" \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is Wipro's revenue for FY2024?"}'
+  -d '{"question": "What is our parental leave policy?"}'
 ```
 
 Response:
 
 ```json
 {
-  "answer": "Wipro reported revenue of ...",
-  "confidence": 0.82,
-  "confidence_level": "HIGH",
+  "answer": "The parental leave policy grants ...",
+  "confidence_score": 0.82,
+  "confidence_tier": "high",
   "sources": [
     {
-      "content": "...",
-      "metadata": { "source_file": "wipro.txt", "chunk_index": 3 }
+      "source_file": "hr-handbook.pdf",
+      "section_heading": "Leave Entitlements",
+      "relevance_score": 0.91,
+      "content": "..."
     }
   ]
 }
@@ -200,7 +201,7 @@ Response:
 
 ## Environment variables
 
-All variables live in `backend/.env`. See `backend/.env.example` for the full list.
+All variables live in `backend/.env`. See `backend/.env.example` for the full list with descriptions.
 
 | Variable | Required | Description |
 |---|---|---|
@@ -224,12 +225,12 @@ Railway runs each service from its own Dockerfile. No changes needed — the fil
 1. Create a new Railway project and add two services: `backend` and `frontend`.
 2. Point each service at the correct subdirectory (`./backend` and `./frontend`).
 3. Set environment variables for the backend service in Railway's dashboard (same as `.env`).
-4. For the frontend, set these Railway build variables:
+4. For the frontend service, set these build variables:
    ```
-   VITE_API_URL=https://your-backend.railway.app
-   VITE_API_KEY=<your key>
+   VITE_API_URL=https://your-backend.up.railway.app
+   VITE_API_KEY=<your-api-key>
    ```
-5. Add a Railway volume mounted at `/app/chromadb_store` for the backend to persist ChromaDB data.
+5. Add a Railway volume mounted at `/app/chromadb_store` to persist ChromaDB data across deploys.
 
 ---
 
@@ -250,16 +251,19 @@ your-senior/
 │   │   │   └── health.py        # GET /health
 │   │   ├── rag/
 │   │   │   ├── engine.py        # Retrieve → Claude → confidence score
+│   │   │   ├── retriever.py     # ChromaDB similarity search
 │   │   │   └── embedder.py      # sentence-transformers (all-MiniLM-L6-v2)
 │   │   ├── ingestion/
 │   │   │   ├── chunker.py       # Semantic chunking with sentence-split fallback
 │   │   │   ├── pipeline.py      # Google Drive sync job runner
+│   │   │   ├── gdrive.py        # Google Drive API client
 │   │   │   ├── registry.py      # Parser lookup by extension / MIME type
 │   │   │   └── parsers/
-│   │   │       ├── pdf.py
-│   │   │       ├── docx.py
-│   │   │       ├── gdoc.py
-│   │   │       └── txt.py
+│   │   │       ├── base.py      # BaseParser abstract class
+│   │   │       ├── pdf_parser.py
+│   │   │       ├── docx_parser.py
+│   │   │       ├── gdocs_parser.py
+│   │   │       └── txt_parser.py
 │   │   ├── db/
 │   │   │   └── chroma.py        # ChromaDB client + collection singleton
 │   │   └── models/
@@ -267,8 +271,7 @@ your-senior/
 │   ├── secrets/                 # Google service account JSON (gitignored)
 │   ├── requirements.txt
 │   ├── Dockerfile
-│   ├── .env.example
-│   └── ingest_companies.py      # Bulk ingest helper script
+│   └── .env.example
 │
 ├── frontend/
 │   ├── src/
@@ -285,10 +288,22 @@ your-senior/
 │   │   │   └── HealthPanel.jsx
 │   │   └── api/
 │   │       └── client.js        # Typed fetch wrapper for all API calls
-│   ├── nginx.conf               # SPA routing + asset caching
+│   ├── nginx.conf               # SPA routing + static asset caching
 │   ├── Dockerfile
-│   └── tailwind.config.js       # navy + gold color families
+│   └── tailwind.config.js       # navy + gold colour families
 │
 ├── docker-compose.yml
+├── CONTRIBUTING.md
+├── LICENSE
 └── README.md
 ```
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code conventions, and the PR process.
+
+## License
+
+[MIT](LICENSE) © 2026 Sai

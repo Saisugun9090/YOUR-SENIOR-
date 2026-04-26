@@ -1,3 +1,5 @@
+"""Retrieves the top-K semantically similar chunks from ChromaDB for a query."""
+
 from app.db.chroma import get_collection
 from app.models.schemas import ChunkSource
 from app.rag.embedder import embed_query

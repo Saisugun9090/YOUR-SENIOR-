@@ -1,3 +1,5 @@
+"""API key authentication middleware — swap this class for OAuth in one place."""
+
 from fastapi import status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -5,7 +7,7 @@ from starlette.requests import Request
 
 from app.config import get_settings
 
-# Paths that bypass API key auth (docs + health only)
+# Paths that bypass API key auth: public docs and health probe.
 _OPEN_PATHS = frozenset({"/health", "/docs", "/redoc", "/openapi.json", "/"})
 
 

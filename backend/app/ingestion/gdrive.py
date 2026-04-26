@@ -1,3 +1,5 @@
+"""Google Drive client: lists and downloads files using a service account."""
+
 import asyncio
 import io
 
@@ -7,7 +9,7 @@ from googleapiclient.http import MediaIoBaseDownload
 
 _SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
-# Google Docs exports to plain text; other types are downloaded directly
+# Google Docs must be exported as plain text; all other types are downloaded directly.
 _EXPORT_MAP: dict[str, str] = {
     "application/vnd.google-apps.document": "text/plain",
 }
@@ -23,6 +25,7 @@ SUPPORTED_MIME_TYPES = frozenset(
 
 
 def _build_service(service_account_path: str):
+    """Build an authenticated Google Drive v3 service client."""
     creds = service_account.Credentials.from_service_account_file(
         service_account_path, scopes=_SCOPES
     )
@@ -30,6 +33,7 @@ def _build_service(service_account_path: str):
 
 
 def _list_files_sync(service_account_path: str, folder_id: str | None) -> list[dict]:
+    """Synchronously list all supported files in a Drive folder (handles pagination)."""
     service = _build_service(service_account_path)
     conditions = ["trashed = false", "mimeType != 'application/vnd.google-apps.folder'"]
     if folder_id:
@@ -55,6 +59,7 @@ def _list_files_sync(service_account_path: str, folder_id: str | None) -> list[d
 
 
 def _download_file_sync(service_account_path: str, file_id: str, mime_type: str) -> bytes:
+    """Synchronously download or export a single Drive file as bytes."""
     service = _build_service(service_account_path)
     export_mime = _EXPORT_MAP.get(mime_type)
 
@@ -72,9 +77,15 @@ def _download_file_sync(service_account_path: str, file_id: str, mime_type: str)
     return buf.getvalue()
 
 
-async def list_drive_files(service_account_path: str, folder_id: str | None = None) -> list[dict]:
+async def list_drive_files(
+    service_account_path: str, folder_id: str | None = None
+) -> list[dict]:
+    """Async wrapper: list supported files in a Drive folder."""
     return await asyncio.to_thread(_list_files_sync, service_account_path, folder_id)
 
 
-async def download_file(service_account_path: str, file_id: str, mime_type: str) -> bytes:
+async def download_file(
+    service_account_path: str, file_id: str, mime_type: str
+) -> bytes:
+    """Async wrapper: download a Drive file by ID."""
     return await asyncio.to_thread(_download_file_sync, service_account_path, file_id, mime_type)

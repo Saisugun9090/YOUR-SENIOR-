@@ -17,6 +17,12 @@ build/
 
 # ChromaDB data
 data/
+chromadb_store/
+**/chromadb_store/
+
+# Logs
+*.log
+server.log
 
 # Node
 node_modules/

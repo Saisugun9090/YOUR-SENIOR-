@@ -1,3 +1,5 @@
+"""Core RAG pipeline: retrieve → ask Claude → score confidence → return response."""
+
 import json
 import uuid
 from datetime import datetime, timezone

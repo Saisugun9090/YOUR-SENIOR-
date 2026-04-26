@@ -1,3 +1,5 @@
+"""Background ingestion pipeline: fetches files from Google Drive, chunks, embeds, and stores them."""
+
 import uuid
 from datetime import datetime, timezone
 
@@ -8,15 +10,20 @@ from app.ingestion.gdrive import download_file, list_drive_files
 from app.ingestion.registry import get_parser
 from app.rag.embedder import embed_texts
 
-# In-memory job store — sufficient for MVP, swap for Redis/DB in production
+# In-memory job store — sufficient for MVP; swap for Redis or a DB in production.
 _jobs: dict[str, dict] = {}
 
 
 def get_job_status(job_id: str) -> dict | None:
+    """Return the current state dict for a job, or None if the ID is unknown."""
     return _jobs.get(job_id)
 
 
 async def run_ingestion_job(job_id: str, folder_id: str | None = None) -> None:
+    """
+    Pull all supported files from Google Drive, parse, chunk, embed, and store them.
+    Updates the in-memory job store so callers can poll for progress.
+    """
     settings = get_settings()
     _jobs[job_id] = {
         "status": "running",
@@ -48,7 +55,7 @@ async def run_ingestion_job(job_id: str, folder_id: str | None = None) -> None:
             )
             parsed = await parser.parse(content, filename, author=owner)
 
-            # Stable doc_id derived from the Drive file ID — survives re-ingestion
+            # Stable doc_id from Drive file ID — survives re-ingestion cleanly.
             doc_id = str(uuid.uuid5(uuid.NAMESPACE_URL, file_id))
             chunks = chunk_document(
                 parsed, doc_id, settings.max_chunk_tokens, settings.chunk_overlap_tokens
@@ -57,7 +64,6 @@ async def run_ingestion_job(job_id: str, folder_id: str | None = None) -> None:
             if not chunks:
                 continue
 
-            # Remove stale chunks before re-inserting (idempotent re-index)
             try:
                 existing = collection.get(where={"doc_id": doc_id})
                 if existing["ids"]:

@@ -1,3 +1,5 @@
+"""Query endpoint — accepts a question and returns a RAG-powered answer."""
+
 from fastapi import APIRouter, HTTPException, status
 
 from app.models.schemas import QueryRequest, QueryResponse

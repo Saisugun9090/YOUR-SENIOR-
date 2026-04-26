@@ -1,12 +1,16 @@
+"""ChromaDB client and collection singleton used throughout the application."""
+
+from functools import lru_cache
+
 import chromadb
 from chromadb.config import Settings as ChromaSettings
-from functools import lru_cache
 
 from app.config import get_settings
 
 
 @lru_cache()
 def get_chroma_client() -> chromadb.PersistentClient:
+    """Return a cached ChromaDB persistent client (created once at startup)."""
     settings = get_settings()
     return chromadb.PersistentClient(
         path=settings.chroma_persist_dir,
@@ -15,6 +19,7 @@ def get_chroma_client() -> chromadb.PersistentClient:
 
 
 def get_collection() -> chromadb.Collection:
+    """Return the application's ChromaDB collection, creating it if absent."""
     settings = get_settings()
     client = get_chroma_client()
     return client.get_or_create_collection(
@@ -24,6 +29,7 @@ def get_collection() -> chromadb.Collection:
 
 
 def is_connected() -> bool:
+    """Return True if ChromaDB is reachable and the collection is accessible."""
     try:
         get_collection().count()
         return True

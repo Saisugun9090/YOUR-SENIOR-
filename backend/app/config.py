@@ -1,4 +1,7 @@
+"""Application settings loaded from environment variables via pydantic-settings."""
+
 from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,9 +42,11 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
+        """Return CORS_ORIGINS as a parsed list of origin strings."""
         return [o.strip() for o in self.cors_origins.split(",")]
 
 
 @lru_cache()
 def get_settings() -> Settings:
+    """Return a cached Settings instance (reads .env once at startup)."""
     return Settings()
