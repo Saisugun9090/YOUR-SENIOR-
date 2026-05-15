@@ -34,7 +34,7 @@ Every answer is scored on a three-tier confidence scale:
 |---|---|---|
 | **HIGH** | > 75 % | Full answer with source citations |
 | **PARTIAL** | 40 – 75 % | Answer with a confidence warning |
-| **LOW** | < 40 % | Declines to answer; shows raw retrieved chunks |
+| **LOW** | < 40 % | Answers with partial infomation is any relavent present |
 
 ---
 

@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 class ConfidenceTier(str, Enum):
     HIGH    = "high"     # score > CONFIDENCE_HIGH  → full answer + citations
     PARTIAL = "partial"  # CONFIDENCE_LOW ≤ score ≤ CONFIDENCE_HIGH → partial answer
-    LOW     = "low"      # score < CONFIDENCE_LOW   → "I don't have a reliable answer"
+    LOW     = "low"      # score < CONFIDENCE_LOW   → "I don't have a reliable answer, here is what I've found."
 
 
 # ─── Query ────────────────────────────────────────────────────────────────────
